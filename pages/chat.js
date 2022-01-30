@@ -1,21 +1,51 @@
 import { Box, Text, TextField, Image, Button } from '@skynexui/components';
 import React from 'react';
 import appConfig from '../config.json';
+import { createClient } from '@supabase/supabase-js';
+
+const SUPABASE_ANON_KEY ='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlhdCI6MTY0MzM3OTQ4OCwiZXhwIjoxOTU4OTU1NDg4fQ._Lf3oKrg9X-Wa54wf9xI5TRx4KJ1eS-fwIEKxKjog78';
+const SUPABASE_URL = 'https://mcgbtmloicertthtsnsa.supabase.co';
+const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+
 
 export default function ChatPage() {
     const [mensagem, setMensagem] = React.useState('');
     const [listaDeMensagens, setListaDeMensagens] = React.useState([]);
 
+    React.useEffect(() => {
+        supabaseClient
+            .from('mensagens')
+            .select('*')
+            .order('id', {ascending: false})
+            .then(({ data }) => {
+                console.log('Dados da consulta:', data);
+                setListaDeMensagens(data);
+            });
+    },  []);
+    
+
     function handleNovaMensagem(novaMensagem) {
         const mensagem = {
-            id: listaDeMensagens.lengh + 1,
+            //id: listaDeMensagens.lengh + 1,
             de: 'vanessametonini',
             texto: novaMensagem,
-        }
-        setListaDeMensagens([
-            mensagem,
-            ...listaDeMensagens
-        ])
+        };
+
+        supabaseClient
+            .from('mensagens')
+            .insert([         //tem que ser um objeto com os mesmos campos definidos no supabase
+                     mensagem
+         ])
+            .then(({data}) => {
+                console.log('Criando mensagem:', data);
+                setListaDeMensagens([
+                    data[0],
+                    ...listaDeMensagens,
+                ]);
+            });
+
+
         setMensagem('');
     }
     // Sua lógica vai aqui
@@ -82,7 +112,6 @@ export default function ChatPage() {
                             onKeyPress={(event) => {
                                 if (event.key === 'Enter') {
                                     event.preventDefault();
-                                    console.log(event);
                                     handleNovaMensagem(mensagem);
                                 }
                             }}
@@ -165,7 +194,7 @@ function MessageList(props) {
                                     display: 'inline-block',
                                     marginRight: '8px',
                                 }}
-                                src={`https://github.com/vanessametonini.png`}
+                                src={`https://github.com/${mensagem.de}.png`}
                             />
                             <Text tag="strong">
                                 {mensagem.de}
